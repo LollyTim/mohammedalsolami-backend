@@ -1,5 +1,5 @@
 const cloudinary = require("cloudinary").v2;
-const sharp = require("sharp");
+const Jimp = require("jimp");
 
 // Return "https" URLs by setting secure: true
 cloudinary.config({
@@ -24,11 +24,7 @@ const uploadImages = async (req, res, next) => {
     const fileUrls = [];
     if (Array.isArray(files)) {
       for (const file of files) {
-        const buffer = await sharp(file.buffer)
-          .resize(700)
-          .toFormat("jpeg")
-          .jpeg({ quality: 90 })
-          .toBuffer();
+        const buffer = await processImage(file.buffer);
         const upload = await uploadToCloudinary(buffer);
         if (upload.secure_url) {
           fileUrls.push(upload.secure_url);
@@ -43,11 +39,7 @@ const uploadImages = async (req, res, next) => {
 
       if (files.mediaUrls) {
         for (const file of files.mediaUrls) {
-          const buffer = await sharp(file.buffer)
-            .resize(700)
-            .toFormat("jpeg")
-            .jpeg({ quality: 90 })
-            .toBuffer();
+          const buffer = await processImage(file.buffer);
           const upload = await uploadToCloudinary(buffer);
           if (upload.secure_url) {
             mediaUrls.push(upload.secure_url);
@@ -59,11 +51,7 @@ const uploadImages = async (req, res, next) => {
 
       if (files.coverImage) {
         for (const file of files.coverImage) {
-          const buffer = await sharp(file.buffer)
-            .resize(700)
-            .toFormat("jpeg")
-            .jpeg({ quality: 90 })
-            .toBuffer();
+          const buffer = await processImage(file.buffer);
           const upload = await uploadToCloudinary(buffer);
           if (upload.secure_url) {
             coverImages.push(upload.secure_url);
@@ -75,11 +63,7 @@ const uploadImages = async (req, res, next) => {
 
       if (files.image) {
         for (const file of files.image) {
-          const buffer = await sharp(file.buffer)
-            .resize(700)
-            .toFormat("jpeg")
-            .jpeg({ quality: 90 })
-            .toBuffer();
+          const buffer = await processImage(file.buffer);
           const upload = await uploadToCloudinary(buffer);
           if (upload.secure_url) {
             imageUrls.push(upload.secure_url);
@@ -101,6 +85,11 @@ const uploadImages = async (req, res, next) => {
     console.error("Error uploading image:", error);
     next(error);
   }
+};
+
+const processImage = async (buffer) => {
+  const image = await Jimp.read(buffer);
+  image.resize(700, Jimp.AUTO).quality(90).getBufferAsync(Jimp.MIME_JPEG);
 };
 
 const uploadToCloudinary = (buffer) => {
