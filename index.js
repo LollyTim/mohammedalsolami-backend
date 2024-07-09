@@ -13,6 +13,8 @@ const corsOptions = require("./config/corsOption");
 const cors = require("cors");
 const cloudinary = require("cloudinary").v2;
 
+dotenv.config();
+
 // Return "https" URLs by setting secure: true
 cloudinary.config({
   secure: true,
@@ -24,9 +26,7 @@ cloudinary.config({
 // Log the configuration
 console.log(cloudinary.config());
 
-dotenv.config();
 app.use(cors());
-
 app.use(bodyParser.json());
 
 app.use("/api/blogs", BlogRoutes);
@@ -35,13 +35,24 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/experiences", experiencRoutes);
 app.use("/api/educations", educationRoutes);
 
+const connectionString = process.env.CONNECTION_STRING;
+
+if (!connectionString) {
+  console.error(
+    "MongoDB connection string is not defined. Please set CONNECTION_STRING in your environment variables."
+  );
+  process.exit(1);
+}
+
 mongoose
-  .connect(process.env.CONNECTION_STRING)
+  .connect(connectionString, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => {
     console.log("Connected to database");
     app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
   })
   .catch((error) => {
-    console.log(error);
-    console.log("Error connecting to database", error);
+    console.error("Error connecting to database", error);
   });
